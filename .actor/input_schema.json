@@ -1,0 +1,47 @@
+{
+    "title": "Inax",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+        "categoryUrl": {
+            "title": "Category URL",
+            "type": "string",
+            "description": "Link danh mục sản phẩm Inax cần lấy thông tin.",
+            "editor": "textfield",
+            "prefill": "https://www.inax.com.vn/vi/san-pham/"
+        },
+        "pageStart": {
+            "title": "Page start",
+            "type": "integer",
+            "description": "Page number to start crawl.",
+            "default": 1
+        },
+        "pageEnd": {
+            "title": "Page end",
+            "type": "integer",
+            "description": "Page number to end crawl.",
+            "default": 20
+        },
+        "delayMin": {
+            "title": "Delay min (ms)",
+            "type": "integer",
+            "description": "Min delay between each request.",
+            "default": 500
+        },
+        "delayMax": {
+            "title": "Delay max (ms)",
+            "type": "integer",
+            "description": "Max delay between each request.",
+            "default": 1000
+        },
+        "maxRequestsPerCrawl": {
+            "title": "Max Requests per Crawl",
+            "type": "integer",
+            "description": "Maximum number of requests that can be made by this crawler.",
+            "default": 50000
+        }
+    },
+    "required": [
+        "categoryUrl"
+    ]
+}

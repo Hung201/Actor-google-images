@@ -1,0 +1,7 @@
+{
+    "url": "https://www.google.com/search?q=gach&tbm=isch",
+    "maxImages": 50,
+    "delayMin": 1000,
+    "delayMax": 3000,
+    "maxRequestsPerCrawl": 1000
+}
