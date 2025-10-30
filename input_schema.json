@@ -8,7 +8,7 @@
             "type": "string",
             "description": "The Google Images search URL to scrape (e.g., https://www.google.com/search?q=your+search+term&tbm=isch)",
             "editor": "textfield",
-            "prefill": "https://www.google.com/search?q=gach&tbm=isch"
+            "isRequired": true
         },
         "maxImages": {
             "title": "Maximum Images",
@@ -22,32 +22,29 @@
         "delayMin": {
             "title": "Minimum Delay (ms)",
             "type": "integer",
-            "description": "Minimum delay between requests in milliseconds (default: 1000)",
-            "default": 1000,
-            "minimum": 100,
+            "description": "Minimum delay between requests in milliseconds (default: 5000)",
+            "default": 5000,
+            "minimum": 1000,
             "maximum": 30000,
             "editor": "number"
         },
         "delayMax": {
             "title": "Maximum Delay (ms)",
             "type": "integer",
-            "description": "Maximum delay between requests in milliseconds (default: 3000)",
-            "default": 3000,
-            "minimum": 500,
+            "description": "Maximum delay between requests in milliseconds (default: 15000)",
+            "default": 15000,
+            "minimum": 2000,
             "maximum": 60000,
             "editor": "number"
         },
         "maxRequestsPerCrawl": {
             "title": "Maximum Requests Per Crawl",
             "type": "integer",
-            "description": "Maximum number of requests per crawl session (default: 1000)",
-            "default": 1000,
+            "description": "Maximum number of requests per crawl session (default: 100)",
+            "default": 100,
             "minimum": 10,
-            "maximum": 10000,
+            "maximum": 1000,
             "editor": "number"
         }
-    },
-    "required": [
-        "url"
-    ]
+    }
 }

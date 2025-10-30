@@ -1,10 +1,26 @@
-# Specify the base Docker image. You can read more about
-# the available images at https://docs.apify.com/sdk/js/docs/guides/docker-images
-# You can also use any other image from Docker Hub.
+# Specify the base Docker image optimized for Puppeteer
+# Using the latest stable version with Chrome pre-installed
 FROM apify/actor-node-puppeteer-chrome:20
 
+# Set environment variables for Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+
+# Install additional system dependencies for better compatibility
+# Switch to root user for system package installation
+USER root
+RUN apt-get update && apt-get install -y \
+    fonts-liberation \
+    fonts-noto-color-emoji \
+    fonts-noto-cjk \
+    fonts-noto-cjk-extra \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch back to myuser for npm operations
+USER myuser
+
 # Check preinstalled packages
-RUN npm ls crawlee apify puppeteer playwright
+RUN npm ls crawlee apify puppeteer
 
 # Copy just package.json and package-lock.json
 # to speed up the build using Docker layer cache.
@@ -21,6 +37,8 @@ RUN npm --quiet set progress=false \
     && node --version \
     && echo "NPM version:" \
     && npm --version \
+    && echo "Chrome version:" \
+    && google-chrome-stable --version \
     && rm -r ~/.npm
 
 # Next, copy the remaining files and directories with the source code.
@@ -28,8 +46,17 @@ RUN npm --quiet set progress=false \
 # for most source file changes.
 COPY . ./
 
-# Cài Chrome đúng version cho Puppeteer
-RUN npx @puppeteer/browsers install chrome@stable
+# Verify Chrome installation and Puppeteer compatibility
+RUN npx puppeteer --version && \
+    google-chrome-stable --version && \
+    echo "Puppeteer and Chrome versions verified"
+
+# Set proper permissions for the current working directory
+USER root
+RUN chown -R myuser:myuser .
+
+# Switch to non-root user for security
+USER myuser
 
 # Run the image.
 CMD npm start --silent

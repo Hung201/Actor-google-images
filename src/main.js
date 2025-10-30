@@ -10,22 +10,30 @@ import path from 'path';
 // The init() call configures the Actor for its environment. It's recommended to start every Actor with an init()
 await Actor.init();
 
-// Đọc input từ file input.json
+// Đọc input từ Actor.getInput() (Apify sẽ sử dụng input_schema.json để tạo UI)
 let input = {};
 try {
-    const inputData = fs.readFileSync('input.json', 'utf8');
-    input = JSON.parse(inputData);
-} catch (error) {
-    console.log('Không tìm thấy file input.json, sử dụng input từ Actor.getInput()');
     input = await Actor.getInput() ?? {};
+    console.log('Sử dụng input từ Actor.getInput()');
+} catch (error) {
+    console.log('Lỗi khi lấy input từ Actor.getInput():', error.message);
+    // Fallback: thử đọc từ file input.json nếu có
+    try {
+        const inputData = fs.readFileSync('input.json', 'utf8');
+        input = JSON.parse(inputData);
+        console.log('Fallback: sử dụng input từ input.json');
+    } catch (fallbackError) {
+        console.log('Không tìm thấy input.json, sử dụng default values');
+        input = {};
+    }
 }
 
 const {
     url,
-    maxImages = 50, // Giảm số lượng để tránh bị phát hiện
-    delayMin = 5000, // Tăng delay tối thiểu
-    delayMax = 15000, // Tăng delay tối đa
-    maxRequestsPerCrawl = 100, // Giảm số request
+    maxImages = 50, // Default từ input_schema.json
+    delayMin = 1000, // Default từ input_schema.json
+    delayMax = 3000, // Default từ input_schema.json
+    maxRequestsPerCrawl = 1000, // Default từ input_schema.json
 } = input;
 
 if (!url) {
@@ -95,8 +103,8 @@ const crawler = new PuppeteerCrawler({
         const randomViewport = viewports[Math.floor(Math.random() * viewports.length)];
         await page.setViewport(randomViewport);
 
-        // Set extra headers với các giá trị ngẫu nhiên
-        const languages = ['vi-VN,vi;q=0.9,en;q=0.8', 'en-US,en;q=0.9', 'vi-VN,vi;q=0.8,en;q=0.7'];
+        // Force tiếng Việt để có kết quả tiếng Việt
+        const languages = ['vi-VN,vi;q=0.9,en;q=0.8', 'vi-VN,vi;q=0.8,en;q=0.7'];
         const randomLanguage = languages[Math.floor(Math.random() * languages.length)];
 
         await page.setExtraHTTPHeaders({
@@ -115,7 +123,34 @@ const crawler = new PuppeteerCrawler({
             'Upgrade-Insecure-Requests': '1',
         });
 
+        // Force Google hiển thị tiếng Việt
+        await page.evaluateOnNewDocument(() => {
+            Object.defineProperty(navigator, 'language', {
+                get: function () { return 'vi-VN'; }
+            });
+            Object.defineProperty(navigator, 'languages', {
+                get: function () { return ['vi-VN', 'vi', 'en']; }
+            });
+        });
+
         try {
+            // Force Google sử dụng tiếng Việt trong URL
+            const currentUrl = page.url();
+            log.info(`Current URL: ${currentUrl}`);
+
+            if (currentUrl.includes('google.com')) {
+                const url = new URL(currentUrl);
+                const searchQuery = url.searchParams.get('q');
+                log.info(`Search query: ${searchQuery}`);
+
+                url.searchParams.set('hl', 'vi'); // Force tiếng Việt
+                url.searchParams.set('gl', 'VN'); // Force Vietnam
+                const newUrl = url.toString();
+                log.info(`Redirecting to: ${newUrl}`);
+
+                await page.goto(newUrl, { waitUntil: 'networkidle2' });
+            }
+
             // Kiểm tra CAPTCHA hoặc trang kiểm tra robot
             const captchaCheck = await page.$('iframe[src*="recaptcha"], .g-recaptcha, #captcha, [data-captcha]');
             if (captchaCheck) {

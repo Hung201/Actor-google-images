@@ -1,8 +1,8 @@
 {
-    "name": "crawlee-cheerio-javascript",
+    "name": "actor-google-images",
     "version": "0.0.1",
     "type": "module",
-    "description": "This is a boilerplate of an Apify actor.",
+    "description": "Apify Actor for crawling Google Images with Puppeteer",
     "engines": {
         "node": ">=18.0.0"
     },
