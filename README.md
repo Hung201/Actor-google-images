@@ -1,77 +1,174 @@
-## JavaScript Crawlee & CheerioCrawler template
+# Google Images Scraper API
 
-This template example was built with [Crawlee](https://crawlee.dev/) to scrape data from a website using [Cheerio](https://cheerio.js.org/) wrapped into [CheerioCrawler](https://crawlee.dev/api/cheerio-crawler/class/CheerioCrawler).
+API server để crawl hình ảnh từ Google Images với metadata đầy đủ.
 
-## Included features
+## 🚀 Cài đặt
 
-- **[Apify SDK](https://docs.apify.com/sdk/js)** - toolkit for building [Actors](https://apify.com/actors)
-- **[Crawlee](https://crawlee.dev/)** - web scraping and browser automation library
-- **[Input schema](https://docs.apify.com/platform/actors/development/input-schema)** - define and easily validate a schema for your Actor's input
-- **[Dataset](https://docs.apify.com/sdk/python/docs/concepts/storages#working-with-datasets)** - store structured data where each object stored has the same attributes
-- **[Cheerio](https://cheerio.js.org/)** - a fast, flexible & elegant library for parsing and manipulating HTML and XML
+```bash
+npm install
+```
 
-## How it works
+## 📡 Chạy Server
 
-This code is a JavaScript script that uses Cheerio to scrape data from a website. It then stores the website titles in a dataset.
+```bash
+npm start
+```
 
-- The crawler starts with URLs provided from the input `startUrls` field defined by the input schema. Number of scraped pages is limited by `maxPagesPerCrawl` field from the input schema.
-- The crawler uses `requestHandler` for each URL to extract the data from the page with the Cheerio library and to save the title and URL of each page to the dataset. It also logs out each result that is being saved.
+Server sẽ chạy tại: `http://localhost:3000`
 
-## Resources
+## 📋 API Endpoints
 
-- [Video tutorial](https://www.youtube.com/watch?v=yTRHomGg9uQ) on building a scraper using CheerioCrawler
-- [Written tutorial](https://docs.apify.com/academy/web-scraping-for-beginners/challenge) on building a scraper using CheerioCrawler
-- [Web scraping with Cheerio in 2023](https://blog.apify.com/web-scraping-with-cheerio/)
-- How to [scrape a dynamic page](https://blog.apify.com/what-is-a-dynamic-page/) using Cheerio
-- [Integration with Zapier](https://apify.com/integrations), Make, Google Drive and others
-- [Video guide on getting data using Apify API](https://www.youtube.com/watch?v=ViYYDHSBAKM)
-- A short guide on how to create Actors using code templates:
+### POST `/api/crawl-images`
 
-[web scraper template](https://www.youtube.com/watch?v=u-i-Korzf8w)
+Crawl hình ảnh từ Google Images.
 
+**Request Body:**
+```json
+{
+    "url": "https://www.google.com/search?q=gach&tbm=isch",
+    "maxImages": 50,
+    "delayMin": 1000,
+    "delayMax": 3000,
+    "maxRequestsPerCrawl": 1000
+}
+```
 
-## Getting started
+**Response:**
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/...",
+            "alt": "Đá granite",
+            "title": "Đá granite",
+            "sourceUrl": "https://example.com/product/...",
+            "sourceTitle": "Gạch lát nền Đá granite",
+            "nearbyText": "Gạch lát nền Đá granite cao cấp",
+            "searchQuery": "gach",
+            "crawledAt": "2025-10-30T02:32:53.933Z"
+        }
+    ]
+}
+```
 
-For complete information [see this article](https://docs.apify.com/platform/actors/development#build-actor-at-apify-console). In short, you will:
+### GET `/health`
 
-1. Build the Actor
-2. Run the Actor
+Health check endpoint.
 
-## Pull the Actor for local development
+**Response:**
+```json
+{
+    "status": "ok",
+    "service": "Google Images Scraper API"
+}
+```
 
-If you would like to develop locally, you can pull the existing Actor from Apify console using Apify CLI:
+### GET `/`
 
-1. Install `apify-cli`
+Thông tin về API.
 
-    **Using Homebrew**
+**Response:**
+```json
+{
+    "service": "Google Images Scraper API",
+    "version": "0.0.1",
+    "endpoints": {
+        "POST /api/crawl-images": "Crawl Google Images",
+        "GET /health": "Health check"
+    }
+}
+```
 
-    ```bash
-    brew install apify-cli
-    ```
+## 📝 Ví dụ sử dụng
 
-    **Using NPM**
+### Sử dụng cURL
 
-    ```bash
-    npm -g install apify-cli
-    ```
+```bash
+curl -X POST http://localhost:3000/api/crawl-images \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://www.google.com/search?q=gach&tbm=isch",
+    "maxImages": 50,
+    "delayMin": 1000,
+    "delayMax": 3000,
+    "maxRequestsPerCrawl": 1000
+  }'
+```
 
-2. Pull the Actor by its unique `<ActorId>`, which is one of the following:
-    - unique name of the Actor to pull (e.g. "apify/hello-world")
-    - or ID of the Actor to pull (e.g. "E2jjCZBezvAZnX8Rb")
+### Sử dụng JavaScript (fetch)
 
-    You can find both by clicking on the Actor title at the top of the page, which will open a modal containing both Actor unique name and Actor ID.
+```javascript
+const response = await fetch('http://localhost:3000/api/crawl-images', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    url: 'https://www.google.com/search?q=gach&tbm=isch',
+    maxImages: 50,
+    delayMin: 1000,
+    delayMax: 3000,
+    maxRequestsPerCrawl: 1000
+  })
+});
 
-    This command will copy the Actor into the current directory on your local machine.
+const data = await response.json();
+console.log(data);
+```
 
-    ```bash
-    apify pull <ActorId>
-    ```
+### Sử dụng Postman/Apify Console
 
-## Documentation reference
+1. Method: `POST`
+2. URL: `http://localhost:3000/api/crawl-images`
+3. Headers: `Content-Type: application/json`
+4. Body (raw JSON):
+```json
+{
+    "url": "https://www.google.com/search?q=gach&tbm=isch",
+    "maxImages": 50,
+    "delayMin": 1000,
+    "delayMax": 3000,
+    "maxRequestsPerCrawl": 1000
+}
+```
 
-To learn more about Apify and Actors, take a look at the following resources:
+## ⚙️ Configuration
 
-- [Apify SDK for JavaScript documentation](https://docs.apify.com/sdk/js)
-- [Apify SDK for Python documentation](https://docs.apify.com/sdk/python)
-- [Apify Platform documentation](https://docs.apify.com/platform)
-- [Join our developer community on Discord](https://discord.com/invite/jyEM2PRvMU)
+### Environment Variables
+
+- `PORT`: Port để chạy server (default: 3000)
+
+```bash
+PORT=8080 npm start
+```
+
+## 📦 Input Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `url` | string | ✅ | - | Google Images search URL |
+| `maxImages` | number | ❌ | 50 | Số hình ảnh tối đa |
+| `delayMin` | number | ❌ | 1000 | Delay tối thiểu (ms) |
+| `delayMax` | number | ❌ | 3000 | Delay tối đa (ms) |
+| `maxRequestsPerCrawl` | number | ❌ | 1000 | Số request tối đa |
+
+## 🎯 Features
+
+- ✅ Crawl Google Images với Puppeteer
+- ✅ Extract metadata đầy đủ (URL, alt, source URL, title)
+- ✅ Force tiếng Việt cho kết quả tiếng Việt
+- ✅ Anti-detection mechanisms
+- ✅ Human behavior simulation
+- ✅ RESTful API với JSON response
+
+## 🔧 Technologies
+
+- **Node.js** >= 18.0.0
+- **Express.js** - Web framework
+- **Puppeteer** - Browser automation
+- **Crawlee** - Web scraping framework
+
+## 📄 License
+
+ISC
