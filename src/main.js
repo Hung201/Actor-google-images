@@ -6,7 +6,7 @@ import { PuppeteerCrawler, sleep } from 'crawlee';
 import fs from 'fs';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3005;
 
 // Middleware
 app.use(cors());
@@ -427,8 +427,20 @@ async function crawlGoogleImages(input) {
 
                 console.log(`Đã tìm thấy ${images.length} hình ảnh`);
 
+                // Lọc bỏ các bản ghi thiếu thông tin quan trọng
+                const filteredImages = images.filter((image) => {
+                    return Boolean(
+                        image.imageUrl &&
+                        image.alt &&
+                        image.sourceUrl &&
+                        image.nearbyText
+                    );
+                });
+
+                console.log(`Sau khi lọc còn ${filteredImages.length} hình ảnh hợp lệ`);
+
                 // Thêm vào results array
-                results.push(...images);
+                results.push(...filteredImages);
 
             } catch (error) {
                 console.error(`Lỗi khi crawl: ${error.message}`);
