@@ -3,7 +3,6 @@ import express from 'express';
 import cors from 'cors';
 // Crawlee - web scraping and browser automation library
 import { PuppeteerCrawler, sleep } from 'crawlee';
-import fs from 'fs';
 
 const app = express();
 const PORT = process.env.PORT || 3005;
@@ -29,6 +28,12 @@ async function crawlGoogleImages(input) {
 
     // Array để lưu kết quả
     const results = [];
+
+    // Thêm timestamp và random param vào URL để tránh cache của Google và Crawlee
+    const urlObj = new URL(url);
+    urlObj.searchParams.set('_t', Date.now().toString());
+    urlObj.searchParams.set('_r', Math.random().toString(36).substring(7));
+    const uniqueUrl = urlObj.toString();
 
     // Crawl Google Images để lấy thông tin hình ảnh
     const crawler = new PuppeteerCrawler({
@@ -60,13 +65,77 @@ async function crawlGoogleImages(input) {
                     '--no-default-browser-check',
                     '--no-pings',
                     '--password-store=basic',
-                    '--use-mock-keychain'
+                    '--use-mock-keychain',
+                    '--disable-application-cache',
+                    '--disable-background-networking',
+                    '--disable-background-timer-throttling',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-breakpad',
+                    '--disable-client-side-phishing-detection',
+                    '--disable-component-update',
+                    '--disable-domain-reliability',
+                    '--disable-features=AudioServiceOutOfProcess',
+                    '--disable-hang-monitor',
+                    '--disable-ipc-flooding-protection',
+                    '--disable-notifications',
+                    '--disable-offer-store-unmasked-wallet-cards',
+                    '--disable-popup-blocking',
+                    '--disable-print-preview',
+                    '--disable-prompt-on-repost',
+                    '--disable-renderer-backgrounding',
+                    '--disable-setuid-sandbox',
+                    '--disable-speech-api',
+                    '--disable-sync',
+                    '--disk-cache-size=0',
+                    '--hide-scrollbars',
+                    '--ignore-gpu-blacklist',
+                    '--ignore-certificate-errors',
+                    '--ignore-certificate-errors-spki-list',
+                    '--ignore-ssl-errors',
+                    '--media-cache-size=0',
+                    '--metrics-recording-only',
+                    '--mute-audio',
+                    '--no-default-browser-check',
+                    '--no-first-run',
+                    '--no-pings',
+                    '--no-sandbox',
+                    '--no-zygote',
+                    '--safebrowsing-disable-auto-update',
+                    '--disable-software-rasterizer'
                 ]
             }
         },
+        // Pre navigation hook để clear cache và cookies
+        preNavigationHooks: [
+            async ({ page, request }) => {
+                // Clear cookies trước mỗi lần navigate
+                const client = await page.target().createCDPSession();
+                await client.send('Network.clearBrowserCookies');
+                await client.send('Network.clearBrowserCache');
+
+                // Disable cache
+                await page.setCacheEnabled(false);
+
+                // Clear storage
+                await page.evaluateOnNewDocument(() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                });
+            }
+        ],
         async requestHandler({ request, page, log }) {
             const searchUrl = request.loadedUrl;
             console.log(`Đang crawl: ${searchUrl}`);
+
+            // Clear cookies và cache ngay khi page load
+            try {
+                const client = await page.target().createCDPSession();
+                await client.send('Network.clearBrowserCookies');
+                await client.send('Network.clearBrowserCache');
+                await page.setCacheEnabled(false);
+            } catch (e) {
+                console.log('Không thể clear cache:', e.message);
+            }
 
             // Set user agent ngẫu nhiên để tránh bị phát hiện
             const userAgents = [
@@ -121,7 +190,7 @@ async function crawlGoogleImages(input) {
             });
 
             try {
-                // Force Google sử dụng tiếng Việt trong URL
+                // Force Google sử dụng tiếng Việt trong URL và thêm cache-busting params
                 const currentUrl = page.url();
                 console.log(`Current URL: ${currentUrl}`);
 
@@ -132,10 +201,17 @@ async function crawlGoogleImages(input) {
 
                     url.searchParams.set('hl', 'vi'); // Force tiếng Việt
                     url.searchParams.set('gl', 'VN'); // Force Vietnam
+                    // Thêm cache-busting params
+                    url.searchParams.set('_t', Date.now().toString());
+                    url.searchParams.set('_r', Math.random().toString(36).substring(7));
                     const newUrl = url.toString();
                     console.log(`Redirecting to: ${newUrl}`);
 
-                    await page.goto(newUrl, { waitUntil: 'networkidle2' });
+                    // Navigate với cache disabled
+                    await page.goto(newUrl, {
+                        waitUntil: 'networkidle2',
+                        cache: 'no-cache'
+                    });
                 }
 
                 // Kiểm tra CAPTCHA hoặc trang kiểm tra robot
@@ -449,7 +525,7 @@ async function crawlGoogleImages(input) {
         }
     });
 
-    await crawler.run([url]);
+    await crawler.run([uniqueUrl]);
 
     return results;
 }
