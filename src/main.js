@@ -5,7 +5,7 @@ import cors from 'cors';
 import { PuppeteerCrawler, sleep } from 'crawlee';
 
 const app = express();
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3003;
 
 // Middleware
 app.use(cors());
